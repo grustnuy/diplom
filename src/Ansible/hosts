@@ -1,0 +1,36 @@
+[front]
+devopsik.ru  letsencrypt_email=grustnuy@yandex.ru domain_name=devopsik.ru
+
+[MySQL]
+db01.devopsik.ru mysql_server_id=1 mysql_replication_role=master
+db02.devopsik.ru mysql_server_id=2 mysql_replication_role=slave
+
+[app]
+app.devopsik.ru
+
+[gitlab]
+gitlab.devopsik.ru
+
+[runner]
+runner.devopsik.ru
+
+[monitoring]
+monitoring.devopsik.ru
+
+[proxy]
+devopsik.ru
+
+[MySQL:vars]
+ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q grustnuy@devopsik.ru"'
+
+[app:vars]
+ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q grustnuy@devopsik.ru"'
+
+[monitoring:vars]
+ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q grustnuy@devopsik.ru"'
+
+[gitlab:vars]
+ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q grustnuy@devopsik.ru"'
+
+[runner:vars]
+ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q grustnuy@devopsik.ru"'

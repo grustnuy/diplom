@@ -1,0 +1,4 @@
+---
+- name: install memcached server
+  apt:
+    pkg: memcached

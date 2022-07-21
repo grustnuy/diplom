@@ -1,0 +1,17 @@
+- hosts: MySQL app gitlab runner monitoring
+  gather_facts: true
+  become:
+    true
+  become_method:
+    sudo
+  become_user:
+    root
+  remote_user:
+    grustnuy
+  roles:
+   - Update
+   - InstaLL_Node_Exporter
+
+  environment:
+     http_proxy: http://devopsik.ru:8118
+     https_proxy: http://devopsik.ru:8118

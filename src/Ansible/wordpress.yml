@@ -1,0 +1,26 @@
+- hosts: app
+  gather_facts: true
+  become:
+    true
+  become_method:
+    sudo
+  become_user:
+    root
+  remote_user:
+    grustnuy
+  vars:
+    - domain: "devopsik.ru"
+    - download_url: "http://wordpress.org/latest.tar.gz"
+    - wpdirectory: "/var/www"
+ 
+  roles:
+   - Update
+   - nginx
+   - memcached
+   - php5
+   - wordpress
+
+  environment:
+     http_proxy: http://devopsik.ru:8118
+     https_proxy: http://devopsik.ru:8118
+
