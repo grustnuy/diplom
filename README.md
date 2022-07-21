@@ -1,17 +1,5 @@
 # Дипломный практикум в YandexCloud
-  * [Цели:](#цели)
-  * [Этапы выполнения:](#этапы-выполнения)
-      * [Регистрация доменного имени](#регистрация-доменного-имени)
-      * [Создание инфраструктуры](#создание-инфраструктуры)
-          * [Установка Nginx и LetsEncrypt](#установка-nginx)
-          * [Установка кластера MySQL](#установка-mysql)
-          * [Установка WordPress](#установка-wordpress)
-          * [Установка Gitlab CE, Gitlab Runner и настройка CI/CD](#установка-gitlab)
-          * [Установка Prometheus, Alert Manager, Node Exporter и Grafana](#установка-prometheus)
-  * [Что необходимо для сдачи задания?](#что-необходимо-для-сдачи-задания)
-  * [Как правильно задавать вопросы дипломному руководителю?](#как-правильно-задавать-вопросы-дипломному-руководителю)
 
----
 ## Цели:
 
 1. Зарегистрировать доменное имя (любое на ваш выбор в любой доменной зоне).
@@ -31,13 +19,13 @@
 На [nic.ru](https://nic.ru) зарегистрирован домен `devopsik.ru`.
 
 Настроены DNS:
-![dns](src/img/DNS.jpg)
+![dns](img/DNS.jpg)
 
 ### Создание инфраструктуры
 
 Создан S3 bucket в YC.
  
-![S3](src/img/S3.jpg)
+![S3](img/S3.jpg)
 
 
 
@@ -47,28 +35,28 @@
 - в `variables.tf` указывается зарезервированный ip адрес для front instance
 - выполняем `terraform apply`.
 
-![terraform](src/img/terraform.jpg)
+![terraform](img/terraform.jpg)
 
-![infrastructure](src/img/infrastructure.jpg)
+![infrastructure](img/infrastructure.jpg)
 ---
-###Description
+## Description
 
-	Используемая версия Ansible 2.9.0
+Используемая версия Ansible 2.9.0
 	
-	В файле `hosts` находится inventory для playbook и переменные для ansible ssh proxy.
+В файле `hosts` находится inventory для playbook и переменные для ansible ssh proxy.
 	
-	В каталоге [Ansible](src/Ansible/) находяться необходимые роли. Установка разделена по сервисам и выполнянться в cледующем порядке:
+В каталоге [Ansible](src/Ansible) находяться необходимые роли. Установка разделена по сервисам и выполнянться в cледующем порядке:
 	
-	- front.yml (Nginx, LetsEncrypt, службу proxy, Node_Exporter)
-	- MySQL.yml (установка и настройка MySQL кластера)
-	- wordpress.yml (Nginx, Memcached, php5, Wordpress)
-	- gitlab.yml (установка Gitlab)
-	- runner.yml (установка Runner Gitlab)
-	- NodeExporter.yml (установка NodeExporter на все хосты)
-	- monitoring.yml (разворачивание мониторинга)
+- front.yml (Nginx, LetsEncrypt, службу proxy, Node_Exporter)
+- MySQL.yml (установка и настройка MySQL кластера)
+- wordpress.yml (Nginx, Memcached, php5, Wordpress)
+- gitlab.yml (установка Gitlab)
+- runner.yml (установка Runner Gitlab)
+- NodeExporter.yml (установка NodeExporter на все хосты)
+- monitoring.yml (разворачивание мониторинга)
 	
 	
-Для переключения между stage и prod запросами сертификатов следует отредактировать tasks с именем Create letsencrypt certificate в файле Ansible\roles\Install_Nginx_LetsEncrypt\tasks\main.yml, добавив или удалив в них флаг --staging :
+Для переключения между stage и prod запросами сертификатов следует отредактировать tasks с именем Create letsencrypt certificate в файле [Ansible/roles/Install_Nginx_LetsEncrypt/tasks/main.yml](src/Ansible/roles/Install_Nginx_LetsEncrypt/tasks/main.yml), добавив или удалив в них флаг '--staging' :
 
 ```
 - name: Create letsencrypt certificate front
@@ -76,29 +64,32 @@
   args:
     creates: /etc/letsencrypt/live/{{ domain_name }}
 ```
+___
 
 ### Установка Nginx и LetsEncrypt
 
 `ansible-playbook front.yml -i hosts`
 
-![front](src/img/front.jpg)
+![front](img/front.jpg)
 ___
+
 ### Установка кластера MySQL
 
 `ansible-playbook MySQL.yml -i hosts`
 
-![mysql/mysql.jpg)
+![mysql](img/mysql.jpg)
 
 Проверка репликации
 
-![mysql-replic](src/img/mysql-replic.jpg)
+![mysql-replic](img/mysql-replic.jpg)
 
 ___
+
 ### Установка WordPress
 
 `ansible-playbook wordpress.yml -i hosts`
 
-![WordPress](src/img/WordPress.jpg)
+![WordPress](img/Wordpress.jpg)
 
 ---
 ### Установка Gitlab CE и Gitlab Runner
@@ -106,28 +97,25 @@ ___
 
 `ansible-playbook wordpress.yml -i hosts`
 
-![gitlab](src/img/gitlab.jpg)
+![gitlab](img/gitlab.jpg)
 
 Подключаемся по ssh на gitlab.devopsik.ru и переcоздаем пароль для учетки root `sudo gitlab-rake "gitlab:password:reset[root]"`
 
 
-Перед установкой Gitlab Runner в файле [src\Ansible\roles\gitlab-runner\defaults\main.yml](src\Ansible\roles\gitlab-runner\defaults\main.yml) указываем gitlab_runner_coordinator_url и gitlab_runner_registration_token.
+Перед установкой Gitlab Runner в файле [src/Ansible/roles/gitlab-runner/defaults/main.yml](src/Ansible/roles/gitlab-runner/defaults/main.yml) указываем gitlab_runner_coordinator_url и gitlab_runner_registration_token.
 
-![runner](src/img/runner.jpg)
+![runner](img/runner.jpg)
 
 `ansible-playbook runner.yml -i hosts`
 
-![runner2](src/img/runner2.jpg)
+![runner2](img/runner2.jpg)
 
-Для выполнения автоматического деплой на сервер `app.devopsik.ru` при коммите в репозиторий с WordPressзадачи deploy из GitLab в app.zhukops.ru была разработана следующая job:
+Для выполнения автоматического деплой на сервер `app.devopsik.ru` при коммите в репозиторий с WordPress была разработана следующая job:
 
 ```
 before_script:
-
   - eval $(ssh-agent -s)
-
   - echo "$ssh_key" | tr -d '\r' | ssh-add -
-
   - mkdir -p ~/.ssh
   - chmod 700 ~/.ssh
 
@@ -149,13 +137,13 @@ deploy-job:
 
 Создаем переменную с ключом для доступа к серверу.
 
-![variables](src/img/variables.jpg)
+![variables](img/variables.jpg)
 
 Проверяем работу.
 
-![pipline](src/img/pipline.jpg)
+![pipline](img/pipline.jpg)
 
-![job](src/img/job.jpg)
+![job](img/job.jpg)
 
 
 
@@ -163,12 +151,12 @@ deploy-job:
 ___
 ### Установка Prometheus, Alert Manager, Node Exporter и Grafana
 
-`ansible-playbook NodeExporter.yml -i hosts
+`ansible-playbook NodeExporter.yml -i hosts`
 
-![nodeexporter](src/img/nodeexporter.jpg)
+![nodeexporter](img/nodeexporter.jpg)
 
 `ansible-playbook monitoring.yml -i hosts`
-![monitoring](src/img/monitoring.jpg)
+![monitoring](img/monitoring.jpg)
 
 
 - Grafana
@@ -176,14 +164,15 @@ ___
 
 Настраиваем Data Sources и импортируем шаблоны из [templates_grafana](src/templates_grafana).
 
-![data_source](src/img/data_source.jpg)
+![data_source](img/data_source.jpg)
 
 
-![grafana](src/img/grafana.jpg)
+![grafana](img/grafana.jpg)
 
 - Prometheus
-![prometheus](src/img/prometheus.jpg)
+
+![prometheus](img/prometheus.jpg)
 
 - Alert Manager
 
-![alert](src/img/alert.jpg)
+![alert](img/alert.jpg)
